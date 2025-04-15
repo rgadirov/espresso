@@ -1,0 +1,6 @@
+ID;customerName;orderTime;status_code
+8731d067-1f95-447d-affd-211354b17e43;John Doe;;Ordered
+33750fdc-6598-4aed-b304-8542ef1d2fe2;Jane Smith;;InPreparation
+14737d20-48b2-4c17-a347-e4f1ca5a9cc7;Emily Johnson;;Ready
+f45d618e-8da6-4d05-9b3c-f69e38d11999;Michael Brown;;PickedUp
+8038ef8d-9465-453e-ba57-600f2db4ce50;Sarah Davis;;Ordered

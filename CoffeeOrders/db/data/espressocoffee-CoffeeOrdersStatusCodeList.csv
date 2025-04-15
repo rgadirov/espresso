@@ -1,0 +1,5 @@
+code;name;criticality
+Ordered;Ordered;0
+InPreparation;InPreparation;2
+Ready;Ready;3
+PickedUp;PickedUp;3

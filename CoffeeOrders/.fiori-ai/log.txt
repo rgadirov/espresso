@@ -1,0 +1,867 @@
+2025-03-02T18:27:45.239Z [info] Project generation uses model: "gpt-4o", version: "latest"
+2025-03-02T18:27:45.249Z [info] 1/5: Regenerate CAP model via LLM
+2025-03-02T18:27:47.976Z [info] 
+==========LLM call for step "extractAppSkeleton":==========
+You help the user building a Fiori Elements application described in the user input.
+
+A Fiori Elements application typically starts with a ListReport page showing the data of the base entity of the application in a table.
+Details of a specific table row are shown in the ObjectPage. This first ObjectPage is therefore based on the base entity of the application.
+An ObjectPage can contain one or more table sections based on to-many associations of its entity type.
+The details of a table section row can be shown in an another ObjectPage based on the associations target entity.
+
+Your task is to find the entities (with their to-many associations) as well as the ObjectPages (with the to-many associations they use in table sections) described in the user input below.
+
+You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
+
+"JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
+
+For example, the example "JSON Schema" instance {{"properties": {{"foo": {{"description": "a list of test words", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}
+would match an object with one required property, "foo". The "type" property specifies "foo" must be an "array", and the "description" property semantically describes it as "a list of test words". The items within "foo" must be strings.
+Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this example "JSON Schema". The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
+
+Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
+
+Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
+```json
+{
+  "type": "object",
+  "properties": {
+    "entities": {
+      "type": "array",
+      "description": "Define all entities and their to-many associations; entity properties will be determined later",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "UpperCamelCase, no spaces, plural, e.g. 'Orders'"
+          },
+          "label": {
+            "type": "string",
+            "description": "max two words, singular"
+          },
+          "associations": {
+            "type": "array",
+            "description": "Define to-many associations between entities",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": "string",
+                  "description": "Points to existing entity, value is entities.name"
+                }
+              },
+              "required": [
+                "name",
+                "target"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "labelPlural": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "associations",
+          "labelPlural"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "baseEntity": {
+      "type": "string",
+      "description": "base entity of ListReport page (if present) and first ObjectPage"
+    },
+    "noListReportPage": {
+      "type": "boolean",
+      "description": "true: no ListReport page will generated, e.g. for applications which start with an (input enabled) Object Page to enter data"
+    },
+    "objectPages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "type": "string",
+            "description": "Entity that the ObjectPage is based on, the first ObjectPage is always based on base entity"
+          },
+          "tableSectionsAssociations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "to-many associations of page entity for table sections shown in the ObjectPage"
+          }
+        },
+        "required": [
+          "entityType"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "namespace": {
+      "type": "string",
+      "description": "lowerCamelCase, no spaces allowed"
+    },
+    "applicationName": {
+      "type": "string",
+      "description": "lowerCamelCase, no spaces allowed"
+    },
+    "userInputKind": {
+      "enum": [
+        "UserInterfaceFirst",
+        "DataModelFirst"
+      ],
+      "description": "use 'UserInterfaceFirst' if User input describes the app based on the user interface, i.e. how List Report and Object Pages should look like; use 'DataModelFirst' if User input describes the app based on its data model, i.e. its entities, their elements and associations"
+    }
+  },
+  "required": [
+    "entities",
+    "baseEntity",
+    "objectPages",
+    "namespace",
+    "applicationName",
+    "userInputKind"
+  ],
+  "additionalProperties": false
+}
+```
+
+Output ONLY the json contents and try to be as accurate as comprehensive as possible.
+
+<UserInput>
+Generate a SAP CAP app based fiori elements app for corresponding data model. A list report with navigation to header information. 
+entity CoffeeOrders {
+ key ID : UUID;
+ customerName : String;
+ coffeeType : Association to CoffeeTypes;
+ orderTime : Timestamp;
+ status : String enum { Ordered; InPreparation; Ready; PickedUp };
+}
+
+entity CoffeeTypes {
+ key ID : UUID;
+ name : String;
+ price : Decimal(5,2);
+}
+</UserInput>
+
+----------Response:----------
+```json
+{
+  "entities": [
+    {
+      "name": "CoffeeOrders",
+      "label": "Coffee Order",
+      "associations": [
+        {
+          "name": "coffeeType",
+          "target": "CoffeeTypes"
+        }
+      ],
+      "labelPlural": "Coffee Orders"
+    },
+    {
+      "name": "CoffeeTypes",
+      "label": "Coffee Type",
+      "associations": [],
+      "labelPlural": "Coffee Types"
+    }
+  ],
+  "baseEntity": "CoffeeOrders",
+  "noListReportPage": false,
+  "objectPages": [
+    {
+      "entityType": "CoffeeOrders",
+      "tableSectionsAssociations": []
+    },
+    {
+      "entityType": "CoffeeTypes",
+      "tableSectionsAssociations": []
+    }
+  ],
+  "namespace": "coffeeShop",
+  "applicationName": "coffeeOrderApp",
+  "userInputKind": "DataModelFirst"
+}
+```
+2025-03-02T18:27:47.978Z [info] Step "switchBasedOnAppSkeleton": case 0 blocked! Evaluation details:
+ - JSONPath "$.model.applications[0].pages[0]" : [{"type":"ListReport","entityType":"CoffeeOrders"}]
+2025-03-02T18:27:47.978Z [info] Step "switchBasedOnAppSkeleton": case 1 blocked! Evaluation details:
+ - JSONPath "$.model.applications[0].pages[0].type" : ["ListReport"]
+2025-03-02T18:27:47.979Z [info] Step "switchBasedOnAppSkeleton": case 2 passed! Evaluation details:
+ - JSONPath "$.userInput.imageCount" : [0]
+2025-03-02T18:27:47.979Z [info] Step "runDataModelFirst": workflow "givenSkeletonExtractDataModelFirst" started
+"
+2025-03-02T18:27:52.646Z [info] 
+==========LLM call for step "extractEntitiesProperties":==========
+You help the user refining the DataModel for a Fiori Elements application described in the user input.
+
+The DataModel consists of the following entities and associations:
+- entity "CoffeeOrders" (with to-many associations to "CoffeeTypes")
+- entity "CoffeeTypes" (with to-one association to "CoffeeOrders")
+
+Your task is to find the properties for each entity.
+
+You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
+
+"JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
+
+For example, the example "JSON Schema" instance {{"properties": {{"foo": {{"description": "a list of test words", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}
+would match an object with one required property, "foo". The "type" property specifies "foo" must be an "array", and the "description" property semantically describes it as "a list of test words". The items within "foo" must be strings.
+Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this example "JSON Schema". The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
+
+Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
+
+Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
+```json
+{
+  "type": "object",
+  "properties": {
+    "elements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entityName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "camelCase, no spaces"
+          },
+          "type": {
+            "type": "string",
+            "description": "Allowed values: String(50), Boolean, Integer, Decimal, Double, Date, Time, DateTime, Timestamp; String length can vary - i.e. String(20)"
+          },
+          "key": {
+            "type": "boolean",
+            "description": "max. one optional key per entity, only if this element is a semantic key and can uniquely identify the instance"
+          },
+          "essentialElement": {
+            "type": "boolean",
+            "description": "'true' only if element is marked as essential'"
+          },
+          "additionalInfo": {
+            "type": "string",
+            "description": "All additional information from user input, e.g. user description, example values; also consider referenced parts in the user input"
+          }
+        },
+        "required": [
+          "entityName",
+          "name",
+          "type",
+          "additionalInfo"
+        ],
+        "additionalProperties": false
+      },
+      "description": "At least 5 realistic elements (unless explicitly specified)"
+    }
+  },
+  "required": [
+    "elements"
+  ],
+  "additionalProperties": false
+}
+```
+
+Output ONLY the json contents and try to be as accurate as comprehensive as possible.
+
+<UserInput>
+Generate a SAP CAP app based fiori elements app for corresponding data model. A list report with navigation to header information. 
+entity CoffeeOrders {
+ key ID : UUID;
+ customerName : String;
+ coffeeType : Association to CoffeeTypes;
+ orderTime : Timestamp;
+ status : String enum { Ordered; InPreparation; Ready; PickedUp };
+}
+
+entity CoffeeTypes {
+ key ID : UUID;
+ name : String;
+ price : Decimal(5,2);
+}
+</UserInput>
+
+----------Response:----------
+```json
+{
+  "elements": [
+    {
+      "entityName": "CoffeeOrders",
+      "name": "ID",
+      "type": "UUID",
+      "key": true,
+      "essentialElement": true,
+      "additionalInfo": "Unique identifier for each coffee order"
+    },
+    {
+      "entityName": "CoffeeOrders",
+      "name": "customerName",
+      "type": "String(255)",
+      "key": false,
+      "essentialElement": true,
+      "additionalInfo": "Name of the customer placing the order"
+    },
+    {
+      "entityName": "CoffeeOrders",
+      "name": "coffeeType",
+      "type": "Association to CoffeeTypes",
+      "key": false,
+      "essentialElement": true,
+      "additionalInfo": "Association to the type of coffee ordered"
+    },
+    {
+      "entityName": "CoffeeOrders",
+      "name": "orderTime",
+      "type": "Timestamp",
+      "key": false,
+      "essentialElement": true,
+      "additionalInfo": "Timestamp of when the order was placed"
+    },
+    {
+      "entityName": "CoffeeOrders",
+      "name": "status",
+      "type": "String(20)",
+      "key": false,
+      "essentialElement": true,
+      "additionalInfo": "Current status of the order; possible values: Ordered, InPreparation, Ready, PickedUp"
+    },
+    {
+      "entityName": "CoffeeTypes",
+      "name": "ID",
+      "type": "UUID",
+      "key": true,
+      "essentialElement": true,
+      "additionalInfo": "Unique identifier for each coffee type"
+    },
+    {
+      "entityName": "CoffeeTypes",
+      "name": "name",
+      "type": "String(255)",
+      "key": false,
+      "essentialElement": true,
+      "additionalInfo": "Name of the coffee type"
+    },
+    {
+      "entityName": "CoffeeTypes",
+      "name": "price",
+      "type": "Decimal(5,2)",
+      "key": false,
+      "essentialElement": true,
+      "additionalInfo": "Price of the coffee type"
+    }
+  ]
+}
+```
+2025-03-02T18:27:54.841Z [info] 
+==========LLM call for step "extractPropertyDetails":==========
+Here is a list of property names, each with the property description that was extracted from previous user input:
+
+CoffeeOrders_customerName: Name of the customer placing the order
+CoffeeOrders_orderTime: Timestamp of when the order was placed
+CoffeeOrders_status: Current status of the order; possible values: Ordered, InPreparation, Ready, PickedUp
+CoffeeTypes_name: Name of the coffee type
+CoffeeTypes_price: Price of the coffee type
+
+For each property analyze the description with respect to what property values can be expected.
+
+You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
+
+"JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
+
+For example, the example "JSON Schema" instance {{"properties": {{"foo": {{"description": "a list of test words", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}
+would match an object with one required property, "foo". The "type" property specifies "foo" must be an "array", and the "description" property semantically describes it as "a list of test words". The items within "foo" must be strings.
+Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this example "JSON Schema". The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
+
+Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
+
+Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
+```json
+{
+  "type": "object",
+  "properties": {
+    "properties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "hasFixedValuesList": {
+            "type": "boolean",
+            "description": "Only limited list of values expected, e.g. property is representing e.g. a type, status, category, unit, organization"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific property values mentioned as part of the description. Those could be possible values or example values. Don't make up or invent any values"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "properties"
+  ],
+  "additionalProperties": false
+}
+```
+
+Output ONLY the json contents and try to be as accurate as comprehensive as possible.
+
+----------Response:----------
+```json
+{
+  "properties": [
+    {
+      "name": "CoffeeOrders_customerName",
+      "hasFixedValuesList": false,
+      "values": []
+    },
+    {
+      "name": "CoffeeOrders_orderTime",
+      "hasFixedValuesList": false,
+      "values": []
+    },
+    {
+      "name": "CoffeeOrders_status",
+      "hasFixedValuesList": true,
+      "values": ["Ordered", "InPreparation", "Ready", "PickedUp"]
+    },
+    {
+      "name": "CoffeeTypes_name",
+      "hasFixedValuesList": false,
+      "values": []
+    },
+    {
+      "name": "CoffeeTypes_price",
+      "hasFixedValuesList": false,
+      "values": []
+    }
+  ]
+}
+```
+2025-03-02T18:27:54.842Z [info] Step "switchSimpleOrComplexApp": case 0 blocked! Evaluation details:
+ - JSONPath "$.model.applications[0].pages[2]" : []
+ - JSONPath "$.userInput.lineCount" : [16]
+2025-03-02T18:27:54.842Z [info] Step "switchSimpleOrComplexApp": no condition met - running default steps
+2025-03-02T18:27:54.842Z [info] Step "runFlowForComplexApp": workflow "givenSkeletonExtractComplexApp" started
+"
+2025-03-02T18:27:58.194Z [info] 
+==========LLM call for classifier:==========
+The user input below describes a Fiori Elements application with a ListReport page and multiple ObjectPages.
+ListReport page shows the data of the specific business object as a list or table. ObjectPage shows details of a specific business object instance.
+Your task is to classify the lines based on the same business object representation to the following categories, one line can refer only to a single category:
+ - LIST_REPORT_COFFEEORDERS: line describes the ListReport page for "CoffeeOrders"
+ - OBJECT_PAGE_COFFEEORDERS: line describes the ObjectPage for "CoffeeOrders"
+ - NONE: line is not describing any ListReport page or ObjectPage
+
+Return your findings as csv file with columns "lineContent" and "category"!
+
+<UserInput>
+Generate a SAP CAP app based fiori elements app for corresponding data model.
+A list report with navigation to header information.
+
+entity CoffeeOrders {
+ key ID : UUID;
+ customerName : String;
+ coffeeType : Association to CoffeeTypes;
+ orderTime : Timestamp;
+ status : String enum { Ordered; InPreparation; Ready; PickedUp };
+}
+
+entity CoffeeTypes {
+ key ID : UUID;
+ name : String;
+ price : Decimal(5,2);
+}
+</UserInput>
+
+----------Response:----------
+To classify the lines based on the given categories, we need to analyze the user input and determine which lines correspond to the ListReport page for "CoffeeOrders" and which correspond to the ObjectPage for "CoffeeOrders". Here is the classification:
+
+```csv
+lineContent,category
+"Generate a SAP CAP app based fiori elements app for corresponding data model.",NONE
+"A list report with navigation to header information.",LIST_REPORT_COFFEEORDERS
+"entity CoffeeOrders {",NONE
+"key ID : UUID;",NONE
+"customerName : String;",NONE
+"coffeeType : Association to CoffeeTypes;",NONE
+"orderTime : Timestamp;",NONE
+"status : String enum { Ordered; InPreparation; Ready; PickedUp };",NONE
+"}",NONE
+"entity CoffeeTypes {",NONE
+"key ID : UUID;",NONE
+"name : String;",NONE
+"price : Decimal(5,2);",NONE
+"}",NONE
+```
+
+Explanation:
+- The line "A list report with navigation to header information." is classified as `LIST_REPORT_COFFEEORDERS` because it describes a list report page with navigation, which aligns with the ListReport page for "CoffeeOrders".
+- The other lines do not specifically describe a ListReport or ObjectPage for "CoffeeOrders" and are therefore classified as `NONE`.
+2025-03-02T18:27:58.195Z [info] Step "loopOverPages": looping over 2 entries
+"
+2025-03-02T18:27:58.195Z [info] Step "loopOverPages" index 0: pageType=ListReport, entityType=CoffeeOrders
+2025-03-02T18:27:58.195Z [info] Step "ifListReportPage": case 0 passed! Evaluation details:
+ - Variable "pageType" : "ListReport"
+2025-03-02T18:27:59.953Z [info] 
+==========LLM call for step "extractListReport":==========
+A Fiori Elements Application has the following pages:
+ - ListReport page for "CoffeeOrders"
+ - ObjectPage for "CoffeeOrders"
+
+Available entities with their associations and elements are:
+Entity "CoffeeOrders"
+   Properties:
+       customerName: Name of the customer placing the order
+       orderTime: Timestamp of when the order was placed
+       status: Current status of the order; possible values: Ordered, InPreparation, Ready, PickedUp
+   Associations:
+       coffeeType: association to many entities CoffeeTypes
+Entity "CoffeeTypes"
+   Properties:
+       name: Name of the coffee type
+       price: Price of the coffee type
+   Associations:
+       coffeeOrders: association to single entity CoffeeOrders
+
+The user input below describes the details of the ListReport page (i.e. its filters, tables or views with their columns).
+
+Your task is to help the user defining the ListReport page.
+
+You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
+
+"JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
+
+For example, the example "JSON Schema" instance {{"properties": {{"foo": {{"description": "a list of test words", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}
+would match an object with one required property, "foo". The "type" property specifies "foo" must be an "array", and the "description" property semantically describes it as "a list of test words". The items within "foo" must be strings.
+Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this example "JSON Schema". The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
+
+Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
+
+Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
+```json
+{
+  "type": "object",
+  "properties": {
+    "loadDataOnAppLaunch": {
+      "type": "string",
+      "enum": [
+        "Auto",
+        "Disabled",
+        "Enabled"
+      ],
+      "description": "'Auto': no explicit user input to load the data after start or an explicit user input to set InitialLoad for table to Auto; 'Disabled': An initial load of data does not occur at app start and the user has to actively click the Go button;  'Enabled': An initial load of data occurs automatically after start  (list is visible without pressing the GO Button)."
+    },
+    "tables": {
+      "type": "array",
+      "description": "tables (views) expected in user input",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "baseEntityType": {
+            "type": "string",
+            "description": "base entity type for the table"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "propertyPaths for columns"
+          }
+        },
+        "required": [
+          "title",
+          "baseEntityType",
+          "columns"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "filters": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "propertyPaths for filters specified in user input. If not specified, empty array"
+    }
+  },
+  "required": [
+    "tables"
+  ],
+  "additionalProperties": false
+}
+```
+
+Output ONLY the json contents and try to be as accurate as comprehensive as possible.
+
+<UserInput>
+Generate a SAP CAP app based fiori elements app for corresponding data model.
+A list report with navigation to header information.
+entity CoffeeOrders {
+key ID : UUID;
+customerName : String;
+coffeeType : Association to CoffeeTypes;
+orderTime : Timestamp;
+status : String enum { Ordered; InPreparation; Ready; PickedUp };
+}
+entity CoffeeTypes {
+key ID : UUID;
+name : String;
+"price : Decimal(5,2);"
+}
+</UserInput>
+
+----------Response:----------
+```json
+{
+  "loadDataOnAppLaunch": "Enabled",
+  "tables": [
+    {
+      "title": "Coffee Orders",
+      "id": "CoffeeOrdersTable",
+      "baseEntityType": "CoffeeOrders",
+      "columns": [
+        "customerName",
+        "orderTime",
+        "status",
+        "coffeeType/name",
+        "coffeeType/price"
+      ]
+    }
+  ],
+  "filters": [
+    "customerName",
+    "orderTime",
+    "status",
+    "coffeeType/name"
+  ]
+}
+```
+2025-03-02T18:27:59.954Z [info] Step "loopOverPages" index 1: pageType=ObjectPage, entityType=CoffeeOrders
+2025-03-02T18:27:59.954Z [info] Step "ifListReportPage": case 0 blocked! Evaluation details:
+ - Variable "pageType" : "ObjectPage"
+2025-03-02T18:27:59.954Z [info] Step "ifListReportPage": no condition met - running default steps
+2025-03-02T18:27:59.954Z [info] Step "extractSingleObjectPageOfMany" SKIPPED: no user input after filter
+2025-03-02T18:27:59.954Z [info] Step "ifCodeListsPresent": case 0 passed! Evaluation details:
+ - JSONPath "$.model.entities[*].elements[*].values[*]" : ["Ordered","InPreparation","Ready","PickedUp"]
+2025-03-02T18:28:03.466Z [info] 
+==========LLM call for step "extractColors":==========
+You help the user creating a Fiori Elements application based on user input describing such an application.
+Your task is to determine whether the entity properties can be considered good and bad in most contexts or are usually neutral. When in doubt, set to neutral.
+
+These are the entity properties and their values:
+Entity: CoffeeOrders, Property: status, Values: Ordered, InPreparation, Ready, PickedUp
+
+If the properties can be considered good and bad, the allowed values for their criticality and the associated colors are:
+   negative: red
+   critical: yellow or orange
+   positive: green
+   neutral:  grey
+
+You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
+
+"JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
+
+For example, the example "JSON Schema" instance {{"properties": {{"foo": {{"description": "a list of test words", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}
+would match an object with one required property, "foo". The "type" property specifies "foo" must be an "array", and the "description" property semantically describes it as "a list of test words". The items within "foo" must be strings.
+Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this example "JSON Schema". The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
+
+Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
+
+Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
+```json
+{
+  "type": "object",
+  "properties": {
+    "properties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "property": {
+            "type": "string"
+          },
+          "hasColorsOrCriticality": {
+            "type": "boolean",
+            "description": "true if the given values of the property can be good or bad, false if they are usually neutral"
+          },
+          "reason": {
+            "type": "string",
+            "description": "detailed explanation why you set hasColorsOrCriticality to this value"
+          },
+          "mapping": {
+            "type": "array",
+            "description": "empty if 'hasColorsOrCriticality' is false",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "description": "value of property"
+                },
+                "colorOrCriticality": {
+                  "type": "string",
+                  "description": "color or criticality associated with value"
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "detailed explanation why you set ColorOrCriticality to this value"
+                }
+              },
+              "required": [
+                "value",
+                "colorOrCriticality"
+              ]
+            }
+          }
+        },
+        "required": [
+          "entity",
+          "property"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "properties"
+  ],
+  "additionalProperties": false
+}
+```
+
+Output ONLY the json contents and try to be as accurate as comprehensive as possible.
+
+<UserInput>
+Generate a SAP CAP app based fiori elements app for corresponding data model. A list report with navigation to header information. 
+entity CoffeeOrders {
+ key ID : UUID;
+ customerName : String;
+ coffeeType : Association to CoffeeTypes;
+ orderTime : Timestamp;
+ status : String enum { Ordered; InPreparation; Ready; PickedUp };
+}
+
+entity CoffeeTypes {
+ key ID : UUID;
+ name : String;
+ price : Decimal(5,2);
+}
+</UserInput>
+
+
+----------Response:----------
+```json
+{
+  "properties": [
+    {
+      "entity": "CoffeeOrders",
+      "property": "status",
+      "hasColorsOrCriticality": true,
+      "reason": "The 'status' property represents the progress of a coffee order, which can be perceived as good or bad depending on the stage. For example, 'Ready' is generally positive as it indicates the order is ready for pickup, while 'InPreparation' might be seen as critical as it is still being processed.",
+      "mapping": [
+        {
+          "value": "Ordered",
+          "colorOrCriticality": "neutral",
+          "reason": "'Ordered' is a neutral state indicating the order has been placed but no further action has been taken yet."
+        },
+        {
+          "value": "InPreparation",
+          "colorOrCriticality": "critical",
+          "reason": "'InPreparation' is critical as it indicates the order is being processed and not yet ready."
+        },
+        {
+          "value": "Ready",
+          "colorOrCriticality": "positive",
+          "reason": "'Ready' is positive as it indicates the order is complete and ready for pickup."
+        },
+        {
+          "value": "PickedUp",
+          "colorOrCriticality": "positive",
+          "reason": "'PickedUp' is positive as it indicates the order has been successfully completed and collected by the customer."
+        }
+      ]
+    }
+  ]
+}
+```
+2025-03-02T18:28:03.467Z [info] 2/5: Build CDS files
+2025-03-02T18:28:03.469Z [info] 3/5: Generating mock data
+2025-03-02T18:28:05.813Z [info] 
+==========LLM call for data generation:==========
+
+For the following list of entities, create data for the empty CSV files.
+Entity "CoffeeOrders" - Properties:
+    customerName: String(255), Name of the customer placing the order
+    orderTime: Timestamp, Timestamp of when the order was placed
+    status: String(20), Current status of the order; possible values: Ordered, InPreparation, Ready, PickedUp
+
+Entity "CoffeeTypes" - Properties:
+    name: String(255), Name of the coffee type
+    price: Decimal, Price of the coffee type
+    coffeeOrders_customerName: String(255), customerName of associated CoffeeOrders
+
+Empty CSV files in json format (only generate content for these files!):
+{"CoffeeOrders.csv":"customerName;orderTime;status","CoffeeTypes.csv":"name;price;coffeeOrders_customerName"}
+
+Rules:
+    - Take over the given header line, do not invent new columns!
+    - For a given file, add rows, add '\n' characters before each row but don't break the JSON string
+    - Do not generate rows with same key values, they must be unique!
+    - Make sure that associations match, i.e. a field containing "Name of the associated Customer" must contain an existing Name of entity Customer
+    - Always use ";" as a delimiter in CSV files
+    - The result must be proper JSON format so it can be parsed, don't break JSON strings within, don't add quotes around values.
+    - Create about 5 rows for the first csv, 7 for the second and so on
+    - All values must be realistic with meaningful content, e.g. 'Laptop Screen' and not just placeholder values with incremented numbers like 'Product 1', 'Product 2' etc.
+    
+Use format for values:
+  String(50): string no longer than 50 characters
+  Decimal(3,2): 1.23
+    
+For the following fields, use only the supplied allowed values (as they are, don't insert spaces or change case):
+- status (of CoffeeOrders): Ordered, InPreparation, Ready, PickedUp
+
+Example output (Do NOT include in output!):
+```json
+{"Blogs":"blogID;title;description;createdDateTime;views\nBlog1;Tech Blog;A blog about the latest technology trends.;2023-06-27T14:52:23Z;1000\nBlog2;Fashion Blog;Explore the world of fashion and style.;2023-06-27T14:52:23Z;500","Posts":"postID;title;content;publishDate;likes;comments;blogID\n1;The Future of Artificial Intelligence;Artificial intelligence is shaping the future of technology.;2023-06-27;50;10;Blog1
+2;Summer Fashion Trends;Discover the hottest fashion trends for the summer season.;2023-06-27;100;20;Blog2\n3;Must-Have Accessories;10 must-have accessories for the upcoming season;2023-06-27;100;20;Blog2"}
+```
+Output ONLY the json contents for the csv files and try to be as accurate as possible.    
+
+
+
+----------Response:----------
+```json
+{"CoffeeOrders.csv":"customerName;orderTime;status\nJohn Doe;2023-10-01T08:30:00Z;Ordered\nJane Smith;2023-10-01T09:00:00Z;InPreparation\nEmily Johnson;2023-10-01T09:30:00Z;Ready\nMichael Brown;2023-10-01T10:00:00Z;PickedUp\nSarah Davis;2023-10-01T10:30:00Z;Ordered","CoffeeTypes.csv":"name;price;coffeeOrders_customerName\nEspresso;2.50;John Doe\nLatte;3.75;Jane Smith\nCappuccino;3.50;Emily Johnson\nAmericano;2.75;Michael Brown\nMocha;4.00;Sarah Davis\nFlat White;3.25;John Doe\nMacchiato;3.00;Jane Smith"}
+```
+2025-03-02T18:28:05.815Z [info] 4/5: Regenerating application manifest
+2025-03-02T18:28:06.527Z [info] 5/5: Copying updated files to CAP project

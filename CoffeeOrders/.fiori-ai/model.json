@@ -1,0 +1,171 @@
+{
+    "namespace": "melittainvoice",
+    "entities": [
+        {
+            "name": "CoffeeOrders",
+            "label": "Coffee Order",
+            "associations": [
+                {
+                    "name": "coffeeType",
+                    "target": "CoffeeTypes",
+                    "multiplicity": "many",
+                    "backAssociation": "coffeeOrders"
+                }
+            ],
+            "labelPlural": "Coffee Orders",
+            "elements": [
+                {
+                    "name": "ID",
+                    "type": "UUID",
+                    "key": true,
+                    "label": ""
+                },
+                {
+                    "name": "customerName",
+                    "type": "String(255)",
+                    "label": "Customer Name",
+                    "additionalInfo": "Name of the customer placing the order",
+                    "key": false,
+                    "essentialElement": true
+                },
+                {
+                    "name": "orderTime",
+                    "type": "Timestamp",
+                    "label": "Order Time",
+                    "additionalInfo": "Timestamp of when the order was placed",
+                    "key": false,
+                    "essentialElement": true
+                },
+                {
+                    "name": "status",
+                    "type": "String(20)",
+                    "label": "Status",
+                    "additionalInfo": "Current status of the order; possible values: Ordered, InPreparation, Ready, PickedUp",
+                    "key": false,
+                    "essentialElement": true,
+                    "values": [
+                        "Ordered",
+                        "InPreparation",
+                        "Ready",
+                        "PickedUp"
+                    ],
+                    "hasFixedValuesList": true,
+                    "hasColorsOrCriticality": true,
+                    "reason": "The 'status' property represents the progress of a coffee order, which can be perceived as good or bad depending on the stage. For example, 'Ready' is generally positive as it indicates the order is ready for pickup, while 'InPreparation' might be seen as critical as it is still being processed.",
+                    "mapping": [
+                        {
+                            "value": "Ordered",
+                            "colorOrCriticality": "neutral",
+                            "reason": "'Ordered' is a neutral state indicating the order has been placed but no further action has been taken yet."
+                        },
+                        {
+                            "value": "InPreparation",
+                            "colorOrCriticality": "critical",
+                            "reason": "'InPreparation' is critical as it indicates the order is being processed and not yet ready."
+                        },
+                        {
+                            "value": "Ready",
+                            "colorOrCriticality": "positive",
+                            "reason": "'Ready' is positive as it indicates the order is complete and ready for pickup."
+                        },
+                        {
+                            "value": "PickedUp",
+                            "colorOrCriticality": "positive",
+                            "reason": "'PickedUp' is positive as it indicates the order has been successfully completed and collected by the customer."
+                        }
+                    ],
+                    "criticalities": [
+                        0,
+                        2,
+                        3,
+                        3
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "CoffeeTypes",
+            "label": "Coffee Type",
+            "associations": [
+                {
+                    "name": "coffeeOrders",
+                    "target": "CoffeeOrders",
+                    "multiplicity": "one",
+                    "isComposition": false
+                }
+            ],
+            "labelPlural": "Coffee Types",
+            "elements": [
+                {
+                    "name": "ID",
+                    "type": "UUID",
+                    "key": true,
+                    "label": ""
+                },
+                {
+                    "name": "name",
+                    "type": "String(255)",
+                    "label": "Name",
+                    "additionalInfo": "Name of the coffee type",
+                    "key": false,
+                    "essentialElement": true
+                },
+                {
+                    "name": "price",
+                    "type": "Decimal",
+                    "label": "Price",
+                    "additionalInfo": "Price of the coffee type",
+                    "key": false,
+                    "essentialElement": true
+                }
+            ]
+        }
+    ],
+    "service": {
+        "name": "melittainvoiceSrv",
+        "path": "srv/service.cds"
+    },
+    "applications": [
+        {
+            "pages": [
+                {
+                    "type": "ListReport",
+                    "entityType": "CoffeeOrders",
+                    "listReportContent": {
+                        "loadDataOnAppLaunch": "Enabled",
+                        "tables": [
+                            {
+                                "title": "Coffee Orders",
+                                "id": "CoffeeOrdersTable",
+                                "baseEntityType": "CoffeeOrders",
+                                "columns": [
+                                    "customerName",
+                                    "orderTime",
+                                    "status",
+                                    "coffeeType/name",
+                                    "coffeeType/price"
+                                ]
+                            }
+                        ],
+                        "filters": [
+                            "customerName",
+                            "orderTime",
+                            "status",
+                            "coffeeType/name"
+                        ]
+                    }
+                },
+                {
+                    "type": "ObjectPage",
+                    "entityType": "CoffeeOrders",
+                    "objectPageContent": {
+                        "tableSectionAssociations": [],
+                        "sections": [],
+                        "tabs": []
+                    }
+                }
+            ],
+            "name": "invoiceManagement"
+        }
+    ]
+}

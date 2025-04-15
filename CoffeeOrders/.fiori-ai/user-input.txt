@@ -1,0 +1,14 @@
+Generate a SAP CAP app based fiori elements app for corresponding data model. A list report with navigation to header information. 
+entity CoffeeOrders {
+ key ID : UUID;
+ customerName : String;
+ coffeeType : Association to CoffeeTypes;
+ orderTime : Timestamp;
+ status : String enum { Ordered; InPreparation; Ready; PickedUp };
+}
+
+entity CoffeeTypes {
+ key ID : UUID;
+ name : String;
+ price : Decimal(5,2);
+}
